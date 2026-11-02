@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rakba Calculator | Kanal–Marla–Sarsai</title>
+<style>
+  :root { --ink:#182b26; --muted:#64736d; --line:#dce5df; --bg:#f4f7f4; --green:#176b4d; --green2:#e4f2e9; --red:#a33232; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,Segoe UI,Arial,sans-serif; padding:24px 14px 40px; }
+  .wrap { max-width:1000px; margin:0 auto; }
+  header { margin-bottom:22px; }
+  .eyebrow { color:var(--green); font-size:12px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; }
+  h1 { font-size:clamp(27px,4vw,38px); margin:8px 0; letter-spacing:-.8px; }
+  .sub { color:var(--muted); margin:0; line-height:1.5; }
+  .rules { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  .rule { background:#fff; border:1px solid var(--line); border-radius:10px; padding:9px 13px; font-size:13px; font-weight:650; }
+  .panel { background:#fff; border:1px solid var(--line); border-radius:16px; overflow:hidden; box-shadow:0 8px 28px #193c2b0b; }
+  .panel-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 20px; border-bottom:1px solid var(--line); }
+  .panel-head h2 { margin:0; font-size:18px; }
+  .count { color:var(--muted); font-size:13px; white-space:nowrap; }
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; min-width:600px; }
+  th { text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); background:#f9fbf9; padding:12px 16px; }
+  td { padding:12px 16px; border-top:1px solid #edf1ee; vertical-align:middle; }
+  .rakba-name { font-weight:700; white-space:nowrap; }
+  input[type=number] { width:100%; min-width:78px; border:1px solid #ccd8d0; border-radius:8px; padding:10px 9px; font:inherit; color:var(--ink); background:white; outline:none; }
+  input:focus { border-color:var(--green); box-shadow:0 0 0 3px #176b4d17; }
+  .remove { border:1px solid #efcccc; color:var(--red); background:#fff; border-radius:8px; padding:8px 10px; cursor:pointer; font-weight:650; }
+  .remove:disabled { opacity:.35; cursor:not-allowed; }
+  .actions { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:16px 20px; flex-wrap:wrap; border-top:1px solid var(--line); }
+  button { font:inherit; cursor:pointer; }
+  .add { background:var(--green); color:#fff; border:0; border-radius:9px; padding:11px 15px; font-weight:750; }
+  .add:disabled { opacity:.4; cursor:not-allowed; }
+  .clear { border:1px solid var(--line); background:#fff; border-radius:9px; padding:10px 14px; color:var(--muted); }
+  .summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:16px; }
+  .metric { background:#fff; border:1px solid var(--line); border-radius:14px; padding:17px; }
+  .metric .label { color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.65px; }
+  .metric .value { margin-top:9px; font-size:clamp(20px,3vw,29px); font-weight:800; letter-spacing:-.5px; overflow-wrap:anywhere; }
+  .metric.primary { background:var(--green2); border-color:#cce4d4; }
+  .metric.primary .value { color:var(--green); }
+  .note { color:var(--muted); font-size:12px; line-height:1.5; margin:15px 2px 0; }
+  .subtract-panel { margin-top:18px; }
+  .sub-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:18px 20px; }
+  .sub-card { border:1px solid var(--line); border-radius:12px; padding:14px; }
+  .sub-card h3 { margin:0 0 12px; font-size:15px; }
+  .fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+  .fields label { display:block; color:var(--muted); font-size:11px; font-weight:700; margin-bottom:5px; }
+  .sub-result { border-top:1px solid var(--line); padding:17px 20px; background:#f9fbf9; }
+  .sub-result .label { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.65px; font-weight:750; }
+  .sub-result .value { margin-top:7px; font-size:clamp(21px,3vw,29px); font-weight:800; color:var(--green); overflow-wrap:anywhere; }
+  .sub-result .value.error { color:var(--red); }
+  @media(max-width:620px) { .sub-grid{grid-template-columns:1fr;padding:14px} }
+  @media(max-width:620px) { body{padding:17px 10px 28px} .summary{grid-template-columns:1fr} .panel-head,.actions{padding:15px} td,th{padding:10px 11px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Land measurement tool</div>
+    <h1>Rakba Calculator</h1>
+    <p class="sub">Add or remove up to 10 rakbas and calculate the combined land area in Kanal, Marla and Sarsai.</p>
+    <div class="rules">
+      <div class="rule">1 Kanal = 20 Marla</div>
+      <div class="rule">1 Marla = 9 Sarsai</div>
+      <div class="rule">1 Kanal = 180 Sarsai</div>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Rakba entries</h2>
+      <span class="count" id="count">1 of 10 rakbas</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Rakba</th><th>Kanal</th><th>Marla</th><th>Sarsai</th><th>Remove</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="actions">
+      <button class="add" id="addBtn" type="button">＋ Add rakba</button>
+      <button class="clear" id="clearBtn" type="button">Clear all values</button>
+    </div>
+  </section>
+
+  <section class="summary" aria-live="polite">
+    <div class="metric primary"><div class="label">Total rakba</div><div class="value" id="total">0 Kanal, 0 Marla, 0 Sarsai</div></div>
+    <div class="metric"><div class="label">Total in Sarsai</div><div class="value" id="sarsaiTotal">0</div></div>
+    <div class="metric"><div class="label">Rakbas entered</div><div class="value" id="entered">0 of 10</div></div>
+  </section>
+  <section class="panel subtract-panel">
+    <div class="panel-head">
+      <h2>Subtract one rakba from another</h2>
+      <span class="count">From − Less = Balance</span>
+    </div>
+    <div class="sub-grid">
+      <div class="sub-card">
+        <h3>Rakba to subtract from</h3>
+        <div class="fields">
+          <div><label for="fromK">Kanal</label><input id="fromK" type="number" min="0" step="1" value="0"></div>
+          <div><label for="fromM">Marla</label><input id="fromM" type="number" min="0" step="1" value="0"></div>
+          <div><label for="fromS">Sarsai</label><input id="fromS" type="number" min="0" step="1" value="0"></div>
+        </div>
+      </div>
+      <div class="sub-card">
+        <h3>Rakba to subtract</h3>
+        <div class="fields">
+          <div><label for="lessK">Kanal</label><input id="lessK" type="number" min="0" step="1" value="0"></div>
+          <div><label for="lessM">Marla</label><input id="lessM" type="number" min="0" step="1" value="0"></div>
+          <div><label for="lessS">Sarsai</label><input id="lessS" type="number" min="0" step="1" value="0"></div>
+        </div>
+      </div>
+    </div>
+    <div class="sub-result" aria-live="polite">
+      <div class="label">Remaining rakba</div>
+      <div class="value" id="difference">0 Kanal, 0 Marla, 0 Sarsai</div>
+      <p class="note" id="differenceNote" style="margin-bottom:0">Enter both rakbas above. The calculator borrows between units automatically.</p>
+    </div>
+  </section>
+  <p class="note">Calculation method: each entry is converted to Sarsai, summed, then normalized back to Kanal–Marla–Sarsai. Enter whole numbers; values are normalized automatically (for example, 21 Marla becomes 1 Kanal and 1 Marla). Blank fields count as zero.</p>
+</div>
+<script>
+(() => {
+  const MAX = 10;
+  const rowsEl = document.getElementById('rows');
+  const addBtn = document.getElementById('addBtn');
+  const countEl = document.getElementById('count');
+  const totalEl = document.getElementById('total');
+  const sarsaiTotalEl = document.getElementById('sarsaiTotal');
+  const enteredEl = document.getElementById('entered');
+  let nextId = 1;
+  let entries = [{ id: nextId++, kanal: 0, marla: 0, sarsai: 0 }];
+
+  function safeInt(value) {
+    const n = Number.parseInt(value, 10);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+  function render() {
+    rowsEl.innerHTML = '';
+    entries.forEach((entry, index) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="rakba-name">Rakba ${index + 1}</td>
+        <td><input type="number" min="0" step="1" inputmode="numeric" aria-label="Rakba ${index + 1} Kanal" data-id="${entry.id}" data-field="kanal" value="${entry.kanal || ''}" placeholder="0"></td>
+        <td><input type="number" min="0" step="1" inputmode="numeric" aria-label="Rakba ${index + 1} Marla" data-id="${entry.id}" data-field="marla" value="${entry.marla || ''}" placeholder="0"></td>
+        <td><input type="number" min="0" step="1" inputmode="numeric" aria-label="Rakba ${index + 1} Sarsai" data-id="${entry.id}" data-field="sarsai" value="${entry.sarsai || ''}" placeholder="0"></td>
+        <td><button type="button" class="remove" data-remove="${entry.id}" ${entries.length === 1 ? 'disabled' : ''}>Delete</button></td>`;
+      rowsEl.appendChild(tr);
+    });
+    countEl.textContent = `${entries.length} of ${MAX} rakbas`;
+    enteredEl.textContent = `${entries.length} of ${MAX}`;
+    addBtn.disabled = entries.length >= MAX;
+    updateTotal();
+  }
+  function updateTotal() {
+    const totalSarsai = entries.reduce((sum, e) =>
+      sum + safeInt(e.kanal) * 180 + safeInt(e.marla) * 9 + safeInt(e.sarsai), 0);
+    const kanal = Math.floor(totalSarsai / 180);
+    const remainderAfterKanal = totalSarsai % 180;
+    const marla = Math.floor(remainderAfterKanal / 9);
+    const sarsai = remainderAfterKanal % 9;
+    totalEl.textContent = `${kanal} Kanal, ${marla} Marla, ${sarsai} Sarsai`;
+    sarsaiTotalEl.textContent = totalSarsai.toLocaleString('en-IN');
+  }
+  rowsEl.addEventListener('input', event => {
+    const input = event.target;
+    if (!input.matches('input[data-field]')) return;
+    const entry = entries.find(e => e.id === Number(input.dataset.id));
+    if (!entry) return;
+    entry[input.dataset.field] = input.value === '' ? 0 : safeInt(input.value);
+    if (input.value !== '' && Number(input.value) < 0) input.value = 0;
+    updateTotal();
+  });
+  rowsEl.addEventListener('click', event => {
+    const button = event.target.closest('button[data-remove]');
+    if (!button || entries.length <= 1) return;
+    entries = entries.filter(e => e.id !== Number(button.dataset.remove));
+    render();
+  });
+  addBtn.addEventListener('click', () => {
+    if (entries.length >= MAX) return;
+    entries.push({ id: nextId++, kanal: 0, marla: 0, sarsai: 0 });
+    render();
+  });
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    entries = entries.map(e => ({ ...e, kanal: 0, marla: 0, sarsai: 0 }));
+    render();
+  });
+  function readUnit(id) {
+    const el = document.getElementById(id);
+    const n = Number.parseInt(el.value, 10);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+  function toSarsai(prefix) {
+    return readUnit(prefix + 'K') * 180 + readUnit(prefix + 'M') * 9 + readUnit(prefix + 'S');
+  }
+  function updateDifference() {
+    const from = toSarsai('from');
+    const less = toSarsai('less');
+    const result = document.getElementById('difference');
+    const note = document.getElementById('differenceNote');
+    if (less > from) {
+      result.textContent = 'Cannot subtract: amount is greater';
+      result.classList.add('error');
+      note.textContent = 'The rakba being subtracted is larger than the starting rakba. Please check the values.';
+      return;
+    }
+    const remaining = from - less;
+    const kanal = Math.floor(remaining / 180);
+    const marla = Math.floor((remaining % 180) / 9);
+    const sarsai = remaining % 9;
+    result.textContent = `${kanal} Kanal, ${marla} Marla, ${sarsai} Sarsai`;
+    result.classList.remove('error');
+    note.textContent = `Balance: ${remaining.toLocaleString('en-IN')} Sarsai. Conversion: 1 Kanal = 180 Sarsai; 1 Marla = 9 Sarsai.`;
+  }
+  ['fromK','fromM','fromS','lessK','lessM','lessS'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateDifference);
+  });
+  render();
+  updateDifference();
+})();
+</script>
+</body>
+</html>
